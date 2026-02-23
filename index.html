@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ply Calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f3f3f3;
+      --card:      #ffffff;
+      --border:    #d0d0d0;
+      --blue:      #0067c0;
+      --blue-dk:   #005a9e;
+      --green:     #2e7d32;
+      --green-lt:  #e8f5e9;
+      --red:       #dc2626;
+      --text:      #1f1f1f;
+      --muted:     #5f5f5f;
+      --faint:     #8f8f8f;
+      --row-alt:   #f9f9f9;
+      --preview-bg:#f0f7ff;
+      --preview-fg:#0067c0;
+      --radius:    8px;
+      --shadow:    0 1px 4px rgba(0,0,0,.08);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    h1 {
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.2;
+    }
+    .subtitle {
+      font-size: .875rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    /* ── Layout ───────────────────────────────────────── */
+    .layout {
+      display: grid;
+      grid-template-columns: 1fr 260px;
+      gap: 14px;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 620px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ── Card ─────────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    /* ── Input form ───────────────────────────────────── */
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    label {
+      display: block;
+      font-size: .8rem;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    input[type="number"], input[type="text"] {
+      width: 100%;
+      font-family: 'DM Sans', sans-serif;
+      font-size: .9rem;
+      background: #fafafa;
+      color: var(--text);
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 7px 28px 7px 9px;
+      outline: none;
+      transition: border-color .15s;
+      -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    input:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(0,103,192,.15); }
+
+    .input-suffix {
+      position: absolute;
+      right: 8px;
+      font-size: .8rem;
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    .hint {
+      font-size: .73rem;
+      color: var(--faint);
+      margin-bottom: 8px;
+      margin-top: 2px;
+    }
+
+    /* ── Preview box ──────────────────────────────────── */
+    .preview-box {
+      background: var(--preview-bg);
+      border-radius: 5px;
+      padding: 8px 10px;
+      margin-bottom: 10px;
+    }
+    .preview-box .preview-lbl {
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--preview-fg);
+      margin-bottom: 3px;
+    }
+    .preview-box .preview-text {
+      font-size: .82rem;
+      color: var(--text);
+    }
+
+    /* ── Buttons ──────────────────────────────────────── */
+    .btn {
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      transition: background .15s, opacity .15s;
+    }
+    .btn-primary {
+      width: 100%;
+      background: var(--blue);
+      color: #fff;
+      font-size: .9rem;
+      padding: 9px 0;
+    }
+    .btn-primary:hover { background: var(--blue-dk); }
+    .btn-secondary {
+      background: #fafafa;
+      color: var(--text);
+      font-size: .8rem;
+      padding: 4px 11px;
+      border: 1px solid #ddd;
+    }
+    .btn-secondary:hover { background: #eaeaea; }
+
+    /* ── Purchases list ───────────────────────────────── */
+    .list-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .list-btns { display: flex; gap: 6px; }
+
+    .table-wrapper {
+      overflow-x: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 5px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: 'DM Mono', monospace;
+      font-size: .82rem;
+    }
+    thead th {
+      background: #e8e8e8;
+      color: var(--muted);
+      font-weight: 500;
+      font-size: .76rem;
+      text-align: left;
+      padding: 6px 10px;
+      white-space: nowrap;
+    }
+    tbody tr { cursor: pointer; }
+    tbody tr:nth-child(odd)  { background: #fafafa; }
+    tbody tr:nth-child(even) { background: #fff; }
+    tbody tr.selected { background: #e3f2fd !important; }
+    tbody tr:hover { background: #eef5ff !important; }
+    tbody td {
+      padding: 6px 10px;
+      white-space: nowrap;
+    }
+    .empty-row td {
+      text-align: center;
+      color: var(--faint);
+      font-family: 'DM Sans', sans-serif;
+      font-style: italic;
+      padding: 18px 0;
+    }
+
+    /* ── Results panel ────────────────────────────────── */
+    .results-col {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .stat-box {
+      background: var(--row-alt);
+      border-radius: 5px;
+      padding: 7px 10px;
+      margin-bottom: 6px;
+    }
+    .stat-box .stat-lbl { font-size: .72rem; color: var(--muted); }
+    .stat-box .stat-val {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .avg-box {
+      background: var(--green-lt);
+      border-radius: 5px;
+      padding: 8px 10px;
+      margin-bottom: 10px;
+    }
+    .avg-box .stat-lbl { font-size: .72rem; color: var(--green); }
+    .avg-box .stat-val {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1b5e20;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .divider { border: none; border-top: 1px solid #e0e0e0; margin: 10px 0; }
+
+    .section-title {
+      font-size: .875rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .split-text {
+      font-size: .8rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+    .split-text.profit { color: var(--green); }
+
+    .profit-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 3px 0;
+    }
+    .profit-row .p-lbl { font-size: .875rem; color: var(--muted); }
+    .profit-row .p-val {
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* ── Profit calculator ────────────────────────────── */
+    .calc-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .calc-row label {
+      margin: 0;
+      font-size: .82rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    .calc-row input {
+      width: 90px;
+      flex-shrink: 0;
+      padding: 5px 8px;
+      font-size: .85rem;
+    }
+    .calc-result {
+      font-size: .82rem;
+      font-weight: 700;
+      font-family: 'DM Mono', monospace;
+    }
+    .calc-result.profit { color: var(--green); }
+    .calc-result.loss   { color: var(--red); }
+    .calc-result.blue   { color: var(--blue); }
+    .calc-result.muted  { color: var(--muted); }
+
+    /* ── Tools section ────────────────────────────────── */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      max-width: 700px;
+      margin: 14px auto 0;
+    }
+    @media (max-width: 620px) {
+      .tools-grid { grid-template-columns: 1fr; }
+    }
+
+    .tool-label {
+      font-size: .72rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 10px;
+    }
+
+    .tool-input-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 7px;
+    }
+    .tool-input-row label {
+      font-size: .75rem;
+      color: var(--muted);
+      margin: 0;
+      white-space: nowrap;
+      min-width: 60px;
+    }
+    .tool-input-row input {
+      flex: 1;
+      padding: 5px 8px;
+      font-size: .82rem;
+    }
+    .tool-input-row .input-suffix {
+      position: static;
+      margin-left: -28px;
+      pointer-events: none;
+      font-size: .75rem;
+      color: var(--muted);
+    }
+
+    .tool-result-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 3px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .tool-result-row:last-child { border-bottom: none; }
+    .tool-result-row .tr-lbl { font-size: .73rem; color: var(--muted); }
+    .tool-result-row .tr-val {
+      font-size: .82rem;
+      font-weight: 700;
+      font-family: 'DM Mono', monospace;
+      color: var(--text);
+    }
+    .tr-val.green  { color: var(--green); }
+    .tr-val.red    { color: var(--red); }
+    .tr-val.blue   { color: var(--blue); }
+    .tr-val.orange { color: #e65100; }
+
+    .tool-note {
+      font-size: .68rem;
+      color: var(--faint);
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+    .tool-empty {
+      font-size: .78rem;
+      color: var(--faint);
+      font-style: italic;
+      margin-top: 4px;
+    }
+
+    /* ── Modal / toast ────────────────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: #222;
+      color: #fff;
+      font-size: .85rem;
+      padding: 9px 18px;
+      border-radius: 20px;
+      opacity: 0;
+      transition: all .25s;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ── Confirm dialog ───────────────────────────────── */
+    .overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.35);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .overlay.show { display: flex; }
+    .dialog {
+      background: #fff;
+      border-radius: 10px;
+      padding: 22px 24px;
+      max-width: 320px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,.2);
+    }
+    .dialog h3 { font-size: 1rem; margin-bottom: 8px; }
+    .dialog p  { font-size: .875rem; color: var(--muted); margin-bottom: 16px; }
+    .dialog-btns { display: flex; gap: 10px; justify-content: flex-end; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Ms Calculator</h1>
+  <p class="subtitle">Calculate your average share price</p>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT COLUMN -->
+  <div style="display:flex; flex-direction:column; gap:14px;">
+
+    <!-- Add purchase -->
+    <div class="card">
+      <div class="card-title">Add a purchase</div>
+
+      <div class="input-row">
+        <div>
+          <label for="inp-shares">Number of shares</label>
+          <div class="input-wrap">
+            <input type="number" id="inp-shares" placeholder="0" min="0" step="any" oninput="onInputChange()" />
+          </div>
+        </div>
+        <div>
+          <label for="inp-price">Price ($)</label>
+          <div class="input-wrap">
+            <input type="number" id="inp-price" placeholder="0.00" min="0" max="0.99" step="0.01" oninput="onInputChange()" />
+            <span class="input-suffix">$</span>
+          </div>
+        </div>
+      </div>
+      <p class="hint">Price range: 0.00 – 0.99</p>
+
+      <div class="preview-box">
+        <div class="preview-lbl">Preview</div>
+        <div class="preview-text" id="preview-text">Enter values to see calculation</div>
+      </div>
+
+      <button class="btn btn-primary" onclick="addOrder()">Add purchase</button>
+    </div>
+
+    <!-- Purchases list -->
+    <div class="card" style="flex:1;">
+      <div class="list-header-row">
+        <span class="card-title" style="margin-bottom:0;">Your purchases</span>
+        <div class="list-btns">
+          <button class="btn btn-secondary" onclick="removeOrder()">Remove</button>
+          <button class="btn btn-secondary" onclick="confirmClear()">Clear all</button>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table id="orders-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Shares</th>
+              <th>Price</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="orders-body">
+            <tr class="empty-row"><td colspan="4">No purchases yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="card results-col">
+    <div class="card-title">Summary</div>
+
+    <div class="stat-box">
+      <div class="stat-lbl">Total shares</div>
+      <div class="stat-val" id="r-shares">0</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-lbl">Total cost</div>
+      <div class="stat-val" id="r-cost">$0.00</div>
+    </div>
+    <div class="avg-box">
+      <div class="stat-lbl">Your average price per share</div>
+      <div class="stat-val" id="r-avg">$0.00</div>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="section-title">Split Opportunity</div>
+    <p class="split-text" id="r-split">No opportunity yet (average ≥ $0.50)</p>
+
+    <hr class="divider" />
+
+    <div class="section-title">Sell prices for profit</div>
+    <div class="profit-row">
+      <span class="p-lbl">5% profit</span>
+      <span class="p-val" id="r-p5">$0.00</span>
+    </div>
+    <div class="profit-row">
+      <span class="p-lbl">10% profit</span>
+      <span class="p-val" id="r-p10">$0.00</span>
+    </div>
+    <div class="profit-row">
+      <span class="p-lbl">20% profit</span>
+      <span class="p-val" id="r-p20">$0.00</span>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="section-title">Profit calculator</div>
+
+    <div class="calc-row">
+      <label for="calc-sell">Sell at ($):</label>
+      <input type="number" id="calc-sell" placeholder="0.00" min="0" max="0.99" step="0.01" oninput="calcProfitFromPrice()" />
+      <span class="calc-result" id="calc-profit-result"></span>
+    </div>
+    <div class="calc-row">
+      <label for="calc-target">Want profit ($):</label>
+      <input type="number" id="calc-target" placeholder="0.00" step="0.01" oninput="calcPriceFromProfit()" />
+      <span class="calc-result blue" id="calc-price-result"></span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Three Tools ───────────────────────────────────── -->
+<div class="tools-grid">
+
+  <!-- 1. Fee Calculator -->
+  <div class="card">
+    <div class="tool-label">🏦 Fee Calculator</div>
+    <div class="tool-input-row">
+      <label for="fee-sell">Sell at</label>
+      <input type="number" id="fee-sell" placeholder="0.00" min="0.01" max="1.00" step="0.01" oninput="calcFee()" />
+      <span class="input-suffix" style="position:static;margin-left:-24px;font-size:.75rem;color:var(--muted);">$</span>
+    </div>
+    <div id="fee-results"><p class="tool-empty">Add purchases first</p></div>
+    <p class="tool-note">Ply takes 2% fee on profits only.</p>
+  </div>
+
+  <!-- 2. Position Sizing (Kelly) -->
+  <div class="card">
+    <div class="tool-label">📐 Position Sizing</div>
+    <div class="tool-input-row">
+      <label for="kelly-conf">Confidence</label>
+      <input type="number" id="kelly-conf" placeholder="60" min="1" max="99" step="1" oninput="calcKelly()" />
+      <span class="input-suffix" style="position:static;margin-left:-24px;font-size:.75rem;color:var(--muted);">%</span>
+    </div>
+    <div class="tool-input-row">
+      <label for="kelly-bank">Bankroll</label>
+      <input type="number" id="kelly-bank" placeholder="100" min="1" step="1" oninput="calcKelly()" />
+      <span class="input-suffix" style="position:static;margin-left:-24px;font-size:.75rem;color:var(--muted);">$</span>
+    </div>
+    <div id="kelly-results"><p class="tool-empty">Add purchases first</p></div>
+    <p class="tool-note">Kelly Criterion — optimal bet to maximise growth.</p>
+  </div>
+
+  <!-- 3. Hedge / Opposite Side -->
+  <div class="card">
+    <div class="tool-label">🔀 Hedge Calculator</div>
+    <div class="tool-input-row">
+      <label for="hedge-price">NO price</label>
+      <input type="number" id="hedge-price" placeholder="0.00" min="0.01" max="0.99" step="0.01" oninput="calcHedge()" />
+      <span class="input-suffix" style="position:static;margin-left:-24px;font-size:.75rem;color:var(--muted);">$</span>
+    </div>
+    <div id="hedge-results"><p class="tool-empty">Add purchases first</p></div>
+    <p class="tool-note">Buy NO shares to lock profit regardless of outcome.</p>
+  </div>
+
+</div>
+
+<!-- Confirm dialog -->
+<div class="overlay" id="confirm-overlay">
+  <div class="dialog">
+    <h3>Clear all purchases</h3>
+    <p>Are you sure you want to clear all your purchases?</p>
+    <div class="dialog-btns">
+      <button class="btn btn-secondary" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-primary" style="width:auto;padding:7px 18px;" onclick="clearAll()">Clear all</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── State ──────────────────────────────────────────────
+  let orders = [];
+  let selectedIndex = -1; // index into orders[]
+
+  // ── Toast ──────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  // ── Input Preview ──────────────────────────────────────
+  function onInputChange() {
+    const sharesVal = document.getElementById('inp-shares').value.trim();
+    const priceVal  = document.getElementById('inp-price').value.trim();
+    const preview   = document.getElementById('preview-text');
+
+    if (!sharesVal || !priceVal) {
+      preview.textContent = 'Enter values to see calculation';
+      return;
+    }
+
+    const shares = parseFloat(sharesVal);
+    const price  = parseFloat(priceVal);
+
+    if (isNaN(shares) || shares <= 0 || isNaN(price) || price < 0 || price > 0.99) {
+      preview.textContent = 'Please check your values';
+      return;
+    }
+
+    const total = shares * price;
+
+    if (orders.length > 0) {
+      const curShares = orders.reduce((s, o) => s + o.shares, 0);
+      const curCost   = orders.reduce((s, o) => s + o.total,  0);
+      const newAvg    = (curCost + total) / (curShares + shares);
+      preview.textContent = `Will cost $${total.toFixed(2)} · New average: $${newAvg.toFixed(2)}`;
+    } else {
+      preview.textContent = `Will cost $${total.toFixed(2)} · Average: $${price.toFixed(2)}`;
+    }
+  }
+
+  // ── Add Order ──────────────────────────────────────────
+  function addOrder() {
+    const sharesStr = document.getElementById('inp-shares').value.trim();
+    const priceStr  = document.getElementById('inp-price').value.trim();
+
+    if (!sharesStr || !priceStr) {
+      showToast('Please enter both shares and price');
+      return;
+    }
+
+    const shares = parseFloat(sharesStr);
+    const price  = parseFloat(priceStr);
+
+    if (isNaN(shares) || shares <= 0) {
+      showToast('Shares must be greater than 0');
+      return;
+    }
+    if (isNaN(price) || price < 0 || price > 0.99) {
+      showToast('Price must be between $0.00 and $0.99');
+      return;
+    }
+
+    const total = shares * price;
+    orders.push({ shares, price, total });
+
+    document.getElementById('inp-shares').value = '';
+    document.getElementById('inp-price').value  = '';
+    document.getElementById('preview-text').textContent = 'Enter values to see calculation';
+
+    renderTable();
+    updateResults();
+  }
+
+  // ── Remove Selected ────────────────────────────────────
+  function removeOrder() {
+    if (selectedIndex < 0) {
+      showToast('Please select a purchase to remove');
+      return;
+    }
+    orders.splice(selectedIndex, 1);
+    selectedIndex = -1;
+    renderTable();
+    updateResults();
+  }
+
+  // ── Clear All ──────────────────────────────────────────
+  function confirmClear() {
+    if (orders.length === 0) return;
+    document.getElementById('confirm-overlay').classList.add('show');
+  }
+  function closeConfirm() {
+    document.getElementById('confirm-overlay').classList.remove('show');
+  }
+  function clearAll() {
+    orders = [];
+    selectedIndex = -1;
+    closeConfirm();
+    renderTable();
+    updateResults();
+  }
+
+  // ── Render Table ───────────────────────────────────────
+  function renderTable() {
+    const tbody = document.getElementById('orders-body');
+    if (orders.length === 0) {
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="4">No purchases yet</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = orders.map((o, i) => `
+      <tr class="${i === selectedIndex ? 'selected' : ''}" onclick="selectRow(${i})">
+        <td>${i + 1}</td>
+        <td>${o.shares.toFixed(2)}</td>
+        <td>$${o.price.toFixed(2)}</td>
+        <td>$${o.total.toFixed(2)}</td>
+      </tr>
+    `).join('');
+  }
+
+  function selectRow(i) {
+    selectedIndex = (selectedIndex === i) ? -1 : i;
+    renderTable();
+  }
+
+  // ── Profit Calculator ──────────────────────────────────
+  function calcProfitFromPrice() {
+    const el = document.getElementById('calc-profit-result');
+    if (orders.length === 0) { el.textContent = ''; return; }
+
+    const val = document.getElementById('calc-sell').value.trim();
+    if (!val) { el.textContent = ''; return; }
+
+    const sellPrice = parseFloat(val);
+    if (isNaN(sellPrice) || sellPrice < 0 || sellPrice > 0.99) {
+      el.textContent = 'Invalid';
+      el.className = 'calc-result loss';
+      return;
+    }
+
+    const totalShares = orders.reduce((s, o) => s + o.shares, 0);
+    const totalCost   = orders.reduce((s, o) => s + o.total,  0);
+    const revenue     = totalShares * sellPrice;
+    const profit      = revenue - totalCost;
+
+    if (profit > 0) {
+      el.textContent = `Profit: +$${profit.toFixed(2)}`;
+      el.className = 'calc-result profit';
+    } else if (profit < 0) {
+      el.textContent = `Loss: -$${Math.abs(profit).toFixed(2)}`;
+      el.className = 'calc-result loss';
+    } else {
+      el.textContent = 'Break-even';
+      el.className = 'calc-result muted';
+    }
+  }
+
+  function calcPriceFromProfit() {
+    const el = document.getElementById('calc-price-result');
+    if (orders.length === 0) { el.textContent = ''; return; }
+
+    const val = document.getElementById('calc-target').value.trim();
+    if (!val) { el.textContent = ''; return; }
+
+    const targetProfit = parseFloat(val);
+    if (isNaN(targetProfit)) { el.textContent = ''; return; }
+
+    const totalShares   = orders.reduce((s, o) => s + o.shares, 0);
+    const totalCost     = orders.reduce((s, o) => s + o.total,  0);
+    const reqRevenue    = totalCost + targetProfit;
+    const reqPrice      = reqRevenue / totalShares;
+
+    if (reqPrice > 0.99) {
+      el.textContent = 'Sell at: >$0.99';
+      el.className = 'calc-result loss';
+    } else if (reqPrice < 0) {
+      el.textContent = 'Invalid';
+      el.className = 'calc-result loss';
+    } else {
+      el.textContent = `Sell at: $${reqPrice.toFixed(2)}`;
+      el.className = 'calc-result blue';
+    }
+  }
+
+  // ── Update Results Panel ───────────────────────────────
+  function updateResults() {
+    if (orders.length === 0) {
+      document.getElementById('r-shares').textContent = '0';
+      document.getElementById('r-cost').textContent   = '$0.00';
+      document.getElementById('r-avg').textContent    = '$0.00';
+      document.getElementById('r-p5').textContent     = '$0.00';
+      document.getElementById('r-p10').textContent    = '$0.00';
+      document.getElementById('r-p20').textContent    = '$0.00';
+      const splitEl = document.getElementById('r-split');
+      splitEl.textContent = 'No opportunity yet (average ≥ $0.50)';
+      splitEl.className = 'split-text';
+      document.getElementById('calc-profit-result').textContent = '';
+      document.getElementById('calc-price-result').textContent  = '';
+      document.getElementById('fee-results').innerHTML    = '<p class="tool-empty">Add purchases first</p>';
+      document.getElementById('kelly-results').innerHTML  = '<p class="tool-empty">Add purchases first</p>';
+      document.getElementById('hedge-results').innerHTML  = '<p class="tool-empty">Add purchases first</p>';
+      return;
+    }
+
+    const totalShares = orders.reduce((s, o) => s + o.shares, 0);
+    const totalCost   = orders.reduce((s, o) => s + o.total,  0);
+    const weightedAvg = totalCost / totalShares;
+
+    const p5  = Math.min(weightedAvg * 1.05, 0.99);
+    const p10 = Math.min(weightedAvg * 1.10, 0.99);
+    const p20 = Math.min(weightedAvg * 1.20, 0.99);
+
+    document.getElementById('r-shares').textContent = totalShares.toFixed(2);
+    document.getElementById('r-cost').textContent   = `$${totalCost.toFixed(2)}`;
+    document.getElementById('r-avg').textContent    = `$${weightedAvg.toFixed(2)}`;
+    document.getElementById('r-p5').textContent     = `$${p5.toFixed(2)}`;
+    document.getElementById('r-p10').textContent    = `$${p10.toFixed(2)}`;
+    document.getElementById('r-p20').textContent    = `$${p20.toFixed(2)}`;
+
+    // Split opportunity
+    const splitEl  = document.getElementById('r-split');
+    const oppPrice = 1.00 - weightedAvg;
+
+    if (weightedAvg < 0.50 && oppPrice > 0.50) {
+      // How many shares at $0.50 keeps new avg near current avg?
+      // Solve for S where new_avg = midpoint between weightedAvg and 0.50
+      // midpoint = (weightedAvg + 0.50) / 2
+      // (totalCost + S*0.50) / (totalShares + S) = midpoint
+      // S = (totalCost - midpoint*totalShares) / (midpoint - 0.50)
+      const midAvg   = (weightedAvg + 0.50) / 2;
+      const S        = (totalCost - midAvg * totalShares) / (midAvg - 0.50);
+      const extraShares = Math.ceil(S);
+      const extraCost   = extraShares * 0.50;
+      const newAvg      = (totalCost + extraCost) / (totalShares + extraShares);
+
+      splitEl.innerHTML =
+        `Buy <strong>${extraShares}</strong> more shares @ $0.50 · cost $${extraCost.toFixed(2)} · new avg: <strong>$${newAvg.toFixed(4)}</strong>`;
+      splitEl.className = 'split-text profit';
+    } else {
+      splitEl.textContent = weightedAvg >= 0.50
+        ? 'No opportunity yet (average ≥ $0.50)'
+        : 'No opportunity yet (opposite side ≤ $0.50)';
+      splitEl.className = 'split-text';
+    }
+
+    calcProfitFromPrice();
+    calcPriceFromProfit();
+    calcFee();
+    calcKelly();
+    calcHedge();
+  }
+
+  // ── Fee Calculator ─────────────────────────────────────
+  function calcFee() {
+    const el = document.getElementById('fee-results');
+    if (orders.length === 0) { el.innerHTML = '<p class="tool-empty">Add purchases first</p>'; return; }
+
+    const sellVal = parseFloat(document.getElementById('fee-sell').value);
+    const totalShares = orders.reduce((s, o) => s + o.shares, 0);
+    const totalCost   = orders.reduce((s, o) => s + o.total,  0);
+
+    // If no sell price entered, show resolution payout at $1.00
+    const sellPrice = (!isNaN(sellVal) && sellVal > 0) ? sellVal : 1.00;
+    const gross     = totalShares * sellPrice;
+    const rawProfit = gross - totalCost;
+    const fee       = rawProfit > 0 ? rawProfit * 0.02 : 0;
+    const netProfit = rawProfit - fee;
+
+    const profitClass = netProfit > 0 ? 'green' : netProfit < 0 ? 'red' : '';
+    el.innerHTML = `
+      <div class="tool-result-row"><span class="tr-lbl">Gross payout</span><span class="tr-val">$${gross.toFixed(2)}</span></div>
+      <div class="tool-result-row"><span class="tr-lbl">2% fee (on profit)</span><span class="tr-val red">−$${fee.toFixed(2)}</span></div>
+      <div class="tool-result-row"><span class="tr-lbl">Net profit</span><span class="tr-val ${profitClass}">${netProfit >= 0 ? '+' : ''}$${netProfit.toFixed(2)}</span></div>
+      <div class="tool-result-row"><span class="tr-lbl">ROI after fee</span><span class="tr-val ${profitClass}">${totalCost > 0 ? ((netProfit/totalCost)*100).toFixed(1) : '0.0'}%</span></div>
+    `;
+  }
+
+  // ── Kelly Position Sizing ──────────────────────────────
+  function calcKelly() {
+    const el = document.getElementById('kelly-results');
+    if (orders.length === 0) { el.innerHTML = '<p class="tool-empty">Add purchases first</p>'; return; }
+
+    const confVal  = parseFloat(document.getElementById('kelly-conf').value);
+    const bankVal  = parseFloat(document.getElementById('kelly-bank').value);
+    if (isNaN(confVal) || isNaN(bankVal) || confVal <= 0 || confVal >= 100 || bankVal <= 0) {
+      el.innerHTML = '<p class="tool-empty">Enter confidence & bankroll</p>';
+      return;
+    }
+
+    const totalShares = orders.reduce((s, o) => s + o.shares, 0);
+    const totalCost   = orders.reduce((s, o) => s + o.total,  0);
+    const weightedAvg = totalCost / totalShares;
+
+    const p = confVal / 100;           // win probability
+    const q = 1 - p;                   // lose probability
+    // Odds: for every $1 bet at avg price, you win (1/avg - 1) net
+    const b = (1 - weightedAvg) / weightedAvg;
+    const kelly = (p * (b + 1) - 1) / b;  // full Kelly fraction
+    const halfKelly = kelly / 2;            // half Kelly (safer)
+
+    const suggestedFull = Math.max(0, kelly * bankVal);
+    const suggestedHalf = Math.max(0, halfKelly * bankVal);
+    const kellyClass    = kelly <= 0 ? 'red' : 'green';
+
+    el.innerHTML = `
+      <div class="tool-result-row"><span class="tr-lbl">Kelly fraction</span><span class="tr-val ${kellyClass}">${(kelly * 100).toFixed(1)}%</span></div>
+      <div class="tool-result-row"><span class="tr-lbl">Full Kelly bet</span><span class="tr-val ${kellyClass}">$${suggestedFull.toFixed(2)}</span></div>
+      <div class="tool-result-row"><span class="tr-lbl">Half Kelly (safer)</span><span class="tr-val blue">$${suggestedHalf.toFixed(2)}</span></div>
+      <div class="tool-result-row"><span class="tr-lbl">Implied prob.</span><span class="tr-val">${(weightedAvg*100).toFixed(1)}% YES</span></div>
+    `;
+    if (kelly <= 0) {
+      el.innerHTML += '<p class="tool-note" style="color:var(--red)">Negative Kelly — edge is against you at this confidence.</p>';
+    }
+  }
+
+  // ── Hedge / Opposite Side Calculator ──────────────────
+  function calcHedge() {
+    const el = document.getElementById('hedge-results');
+    if (orders.length === 0) { el.innerHTML = '<p class="tool-empty">Add purchases first</p>'; return; }
+
+    const noPriceVal = parseFloat(document.getElementById('hedge-price').value);
+    if (isNaN(noPriceVal) || noPriceVal <= 0 || noPriceVal >= 1) {
+      el.innerHTML = '<p class="tool-empty">Enter NO share price</p>';
+      return;
+    }
+
+    const totalShares = orders.reduce((s, o) => s + o.shares, 0);
+    const totalCost   = orders.reduce((s, o) => s + o.total,  0);
+
+    // To equalise both outcomes:
+    // YES wins: totalShares - totalCost - noShares*noPriceVal = profit
+    // NO wins:  noShares*(1-noPriceVal) - totalCost = profit
+    // Solve: noShares = totalShares / (2 - noPriceVal)  ... simplified from setting equal
+    // Actually: set YES profit = NO profit
+    // totalShares - totalCost - X*noPriceVal = X*(1-noPriceVal) - totalCost
+    // totalShares - X*noPriceVal = X - X*noPriceVal
+    // totalShares = X   ← hedge shares = your YES shares
+    const hedgeShares  = Math.ceil(totalShares);
+    const hedgeCost    = hedgeShares * noPriceVal;
+    const yesProfit    = totalShares * 1 - totalCost - hedgeCost;
+    const noProfit     = hedgeShares * 1 - totalCost - hedgeCost;
+    const lockedProfit = Math.min(yesProfit, noProfit);
+    const profitClass  = lockedProfit >= 0 ? 'green' : 'red';
+
+    el.innerHTML = `
+      <div class="tool-result-row"><span class="tr-lbl">Buy NO shares</span><span class="tr-val">${hedgeShares}</span></div>
+      <div class="tool-result-row"><span class="tr-lbl">Hedge cost</span><span class="tr-val">$${hedgeCost.toFixed(2)}</span></div>
+      <div class="tool-result-row"><span class="tr-lbl">If YES wins</span><span class="tr-val ${yesProfit>=0?'green':'red'}">${yesProfit>=0?'+':''}$${yesProfit.toFixed(2)}</span></div>
+      <div class="tool-result-row"><span class="tr-lbl">If NO wins</span><span class="tr-val ${noProfit>=0?'green':'red'}">${noProfit>=0?'+':''}$${noProfit.toFixed(2)}</span></div>
+    `;
+  }
+
+  // ── Enter key to add ───────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' &&
+        (document.activeElement.id === 'inp-shares' ||
+         document.activeElement.id === 'inp-price')) {
+      addOrder();
+    }
+  });
+</script>
+</body>
+</html>
